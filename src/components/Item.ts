@@ -1,35 +1,43 @@
 import {IItem} from "../types";
+import {EventEmitter, IEvents} from "./EventEmmiter";
 
-export interface IViewItem {
+export interface IViewItem extends IEvents {
   id: string;
   name: string;
   render(item: IItem): HTMLElement;
-  setCopyHandler(handleCopyItem: Function): void;
-  setDeleteHandler(handleDeleteItem: Function): void;
-  setEditHandler(handleEditItem: Function): void;
 }
 
 export interface IViewItemConstructor {
-  new (template: HTMLTemplateElement): IViewItem;
+  new(template: HTMLTemplateElement): IViewItem;
 }
 
-export class Item implements IViewItem {
+export class Item extends EventEmitter implements IViewItem {
   protected itemElement: HTMLElement;
   protected title: HTMLElement;
   protected _id: string;
   protected copyButton: HTMLButtonElement;
   protected deleteButton: HTMLButtonElement;
   protected editButton: HTMLButtonElement;
-  protected handleCopyItem: Function;
-  protected handleDeleteItem: Function;
-  protected handleEditItem: Function;
 
   constructor(template: HTMLTemplateElement) {
+    super();
     this.itemElement = template.content.querySelector('.todo-item').cloneNode(true) as HTMLElement;
     this.title = this.itemElement.querySelector('.todo-item__text');
     this.copyButton = this.itemElement.querySelector('.todo-item__copy');
     this.deleteButton = this.itemElement.querySelector('.todo-item__del');
     this.editButton = this.itemElement.querySelector('.todo-item__edit');
+
+    this.deleteButton.addEventListener('click', () => {
+      this.emit('delete', {id: this._id});
+    });
+
+    this.copyButton.addEventListener('click', () => {
+      this.emit('copy', {id: this._id});
+    });
+
+    this.editButton.addEventListener('click', () => {
+      this.emit('edit', {id: this._id});
+    });
   };
 
   set id(value: string) {
@@ -46,27 +54,6 @@ export class Item implements IViewItem {
 
   get name() {
     return this.title.textContent || '';
-  };
-
-  setCopyHandler(handleCopyItem: Function) {
-    this.handleCopyItem = handleCopyItem;
-    this.copyButton.addEventListener('click', (evt) => {
-      this.handleCopyItem(this);
-    });
-  };
-
-  setDeleteHandler(handleDeleteItem: Function) {
-    this.handleDeleteItem = handleDeleteItem;
-    this.deleteButton.addEventListener('click', (evt) => {
-      this.handleDeleteItem(this);
-    });
-  };
-
-  setEditHandler(handleEditItem: Function) {
-    this.handleEditItem = handleEditItem;
-    this.editButton.addEventListener('click', (evt) => {
-      this.handleEditItem(this);
-    });
   };
 
   render(item: IItem) {
